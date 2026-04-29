@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Transmission Line Fault Dashboard v0.1</title>
+
+  <!-- GitHub: https://github.com/Hodd1903 -->
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial;
+      background: #111;
+      color: #eee;
+      text-align: center;
+    }
+    .container {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+      padding: 20px;
+    }
+    .card {
+      background: #222;
+      padding: 20px;
+      border-radius: 10px;
+    }
+    .value {
+      font-size: 24px;
+      margin-top: 10px;
+    }
+    .status {
+      font-size: 20px;
+      padding: 10px;
+      border-radius: 5px;
+    }
+    .normal { background: green; }
+    .fault { background: red; }
+
+    .watermark {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      color: rgba(200, 200, 200, 0.3);
+      font-size: 12px;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>Transmission Line Fault Dashboard v0.1</h1>
+
+<div id="status" class="status normal">NORMAL</div>
+<div>Press SPACE to pause or resume</div>
+
+<div class="container">
+  <div class="card">
+    <h3>Voltage (V)</h3>
+    <div id="voltage" class="value">0</div>
+  </div>
+  <div class="card">
+    <h3>Current (A)</h3>
+    <div id="current" class="value">0</div>
+  </div>
+  <div class="card">
+    <h3>Frequency (Hz)</h3>
+    <div id="frequency" class="value">0</div>
+  </div>
+  <div class="card">
+    <h3>Phase (°)</h3>
+    <div id="phase" class="value">0</div>
+  </div>
+</div>
+
+<canvas id="chart" width="800" height="300"></canvas>
+
+<div class="watermark">github.com/Hodd1903</div>
+
+<script>
+let voltageEl = document.getElementById("voltage");
+let currentEl = document.getElementById("current");
+let frequencyEl = document.getElementById("frequency");
+let phaseEl = document.getElementById("phase");
+let statusEl = document.getElementById("status");
+
+let paused = false;
+
+let ctx = document.getElementById("chart").getContext("2d");
+let chart = new Chart(ctx, {
+  type: "line",
+  data: {
+    labels: [],
+    datasets: [
+      { label: "Voltage", data: [], borderWidth: 2 },
+      { label: "Current", data: [], borderWidth: 2 }
+    ]
+  },
+  options: {
+    animation: false,
+    responsive: true,
+    scales: {
+      y: { beginAtZero: true }
+    }
+  }
+});
+
+document.addEventListener("keydown", function(e) {
+  if (e.code === "Space") {
+    paused = !paused;
+  }
+});
+
+function updateData() {
+  if (paused) return;
+
+  let time = new Date().toLocaleTimeString();
+
+  let voltage = 220 + Math.random() * 10;
+  let current = 5 + Math.random() * 2;
+  let frequency = 60 + Math.random() * 0.2;
+  let phase = Math.random() * 10;
+
+  let fault = Math.random() > 0.9;
+
+  if (fault) {
+    voltage *= 0.5;
+    current *= 3;
+    statusEl.innerText = "FAULT";
+    statusEl.className = "status fault";
+  } else {
+    statusEl.innerText = "NORMAL";
+    statusEl.className = "status normal";
+  }
+
+  voltageEl.innerText = voltage.toFixed(1);
+  currentEl.innerText = current.toFixed(2);
+  frequencyEl.innerText = frequency.toFixed(2);
+  phaseEl.innerText = phase.toFixed(1);
+
+  chart.data.labels.push(time);
+  chart.data.datasets[0].data.push(voltage);
+  chart.data.datasets[1].data.push(current);
+
+  const maxPoints = 30;
+  if (chart.data.labels.length > maxPoints) {
+    chart.data.labels.shift();
+    chart.data.datasets.forEach(ds => ds.data.shift());
+  }
+
+  chart.update();
+}
+
+setInterval(updateData, 1000);
+</script>
+
+</body>
+</html>
